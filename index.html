@@ -4,7 +4,7 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
 <link rel="manifest" href="manifest.webmanifest">
-<meta name="theme-color" content="#f6b3c3">
+<meta name="theme-color" content="#ebb0bd">
 <meta name="apple-mobile-web-app-capable" content="yes">
 <meta name="mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-title" content="Quest Room">
@@ -18,18 +18,18 @@
 <style>
 /* Layout: a soft paper planner. Date masthead; pixel room and the now-reading/watching shelf on the left, stats, mana and focus potion on the right; pill tabs switch one page at a time */
 :root{
-  --bg:#fffaf7; --paper:#ffffff; --wash:#fff1f4; --ink:#5f4552; --ink-soft:#a08893; --line:#f0dde2; --rule:#e9cfd7; --shadow:rgba(190,120,145,.10);
-  --acc:#f6b8c6; --acc-deep:#e590a6; --acc-ink:#b65770; --on-acc:#4b3340;
+  --bg:#f3ebe5; --paper:#faf5f0; --wash:#efe2df; --ink:#594350; --ink-soft:#97808b; --line:#e6d7d0; --rule:#dccac3; --shadow:rgba(120,80,70,.09);
+  --acc:#ebb0bd; --acc-deep:#d98a9e; --acc-ink:#a9516a; --on-acc:#4b3340;
   --c-work:#f4a3b6; --c-study:#c6b2ee; --c-health:#a7d6b2; --c-create:#f6d58a; --c-rest:#a8d3ee;
-  --s-wall:#fde6ea; --s-wall2:#fff3f5; --s-floor:#ecc9ad; --s-floor2:#dfb796; --s-trim:#ffffff; --s-wood:#d7a27f; --s-curtain:#ffffff; --s-dark:0;
+  --s-wall:#f3dcdd; --s-wall2:#f9e9e8; --s-floor:#e2c2a8; --s-floor2:#d4af92; --s-trim:#fbf5f1; --s-wood:#d7a27f; --s-curtain:#ffffff; --s-dark:0;
   --f-display:"Fraunces",Georgia,"Times New Roman",serif;
   --f-pixel:"Pixelify Sans","Courier New",monospace;
   --f-body:"Nunito","Trebuchet MS",system-ui,sans-serif;
   --f-ui:"DM Mono",ui-monospace,"Courier New",monospace;
 }
-:root[data-skin="lavender"]{--bg:#fbf9ff;--wash:#f4effe;--line:#e8e0fa;--rule:#ddd2f5;--acc:#cbb8f2;--acc-deep:#a68ce0;--acc-ink:#7d5fc0;--s-wall:#efe8fd;--s-wall2:#f8f4ff;--s-floor:#e2cdb8;--s-floor2:#d4bba3}
-:root[data-skin="matcha"]{--bg:#f9fbf5;--wash:#eef7e8;--line:#dceada;--rule:#cfe2c6;--acc:#b5dbad;--acc-deep:#8cc282;--acc-ink:#4f8a46;--s-wall:#e6f3de;--s-wall2:#f3faee;--s-floor:#e3cfb3;--s-floor2:#d4bd9d}
-:root[data-skin="peach"]{--bg:#fffaf5;--wash:#fff0e5;--line:#f8e1d0;--rule:#f2d2bb;--acc:#f9c19f;--acc-deep:#ef9f74;--acc-ink:#b8643a;--s-wall:#feeadc;--s-wall2:#fff5ee;--s-floor:#e9c8a6;--s-floor2:#dbb48f}
+:root[data-skin="lavender"]{--bg:#f1edf5;--wash:#e8e1f1;--line:#ded5ea;--rule:#d2c7e2;--acc:#cbb8f2;--acc-deep:#a68ce0;--acc-ink:#7d5fc0;--s-wall:#e6dff3;--s-wall2:#efe9f8;--s-floor:#e2cdb8;--s-floor2:#d4bba3}
+:root[data-skin="matcha"]{--bg:#eef1e9;--wash:#e2eadb;--line:#d6e0cf;--rule:#c8d6bf;--acc:#b5dbad;--acc-deep:#8cc282;--acc-ink:#4f8a46;--s-wall:#dde9d5;--s-wall2:#e8f1e2;--s-floor:#e3cfb3;--s-floor2:#d4bd9d}
+:root[data-skin="peach"]{--bg:#f5ece4;--wash:#f0e0d3;--line:#e8d6c7;--rule:#dfc7b4;--acc:#f9c19f;--acc-deep:#ef9f74;--acc-ink:#b8643a;--s-wall:#f3dfd0;--s-wall2:#f9ebe1;--s-floor:#e9c8a6;--s-floor2:#dbb48f}
 @media (prefers-color-scheme: dark){:root:not([data-theme="light"]){
   --bg:#2b2421;--paper:#352d29;--wash:#40362f;--ink:#f7ece4;--ink-soft:#c9b6a8;--line:#4d423b;--rule:#5e5047;--shadow:rgba(0,0,0,.28);--acc-ink:var(--acc);
   --s-wall:#5a4a40;--s-wall2:#655448;--s-floor:#6b5243;--s-floor2:#5c4639;--s-trim:#8c786a;--s-wood:#9a7158;--s-curtain:#e3d3c6;--s-dark:1;color-scheme:dark}}
@@ -326,10 +326,10 @@ const UNLOCKS=[
   {k:'bookcase',lv:11,n:'Tall bookcase',t:'room'},{k:'moon',lv:13,n:'Moon lamp',t:'room'},
   {k:'wings',lv:15,n:'Pixie wings',t:'wear'},{k:'aura',lv:20,n:'Legend sparkles',t:'wear'}];
 const SKINS={
-  strawberry:{n:'Strawberry Milk',cost:0,sw:['#fffaf8','#fde6ea','#f6b3c3']},
-  lavender:{n:'Lavender Morning',cost:0,sw:['#fbf9ff','#efe8fd','#cbb8f2']},
-  matcha:{n:'Matcha Latte',cost:60,sw:['#f8fbf4','#e6f3de','#b5dbad']},
-  peach:{n:'Peach Soda',cost:60,sw:['#fffaf5','#feeadc','#f9c19f']}};
+  strawberry:{n:'Strawberry Milk',cost:0,sw:['#f3ebe5','#f3dcdd','#ebb0bd']},
+  lavender:{n:'Lavender Morning',cost:0,sw:['#f1edf5','#e6dff3','#cbb8f2']},
+  matcha:{n:'Matcha Latte',cost:60,sw:['#eef1e9','#dde9d5','#b5dbad']},
+  peach:{n:'Peach Soda',cost:60,sw:['#f5ece4','#f3dfd0','#f9c19f']}};
 const HAIR={brown:'#6b4436',pink:'#e7a0b6',black:'#2e2430',blonde:'#e6c57a',lilac:'#ad93d6'};
 const SWEATER={lilac:'#b9a0dc',rose:'#ec9cb0',sage:'#94bf9f',butter:'#f1c86f',cream:'#f6ece0',sky:'#9ccbe8'};
 const ENCOUNTERS=[
@@ -738,7 +738,7 @@ function drawScene(){
   for(let y=35;y<45;y+=3)R(floor2,0,y,80,1);
   for(let y=32,r=0;y<45;y+=3,r++)for(let i=(r%2)*9+4;i<80;i+=18)R(floor2,i,y,1,3);
   // window light on the floor
-  x.save();x.globalAlpha=tod==='night'?0.12:tod==='eve'?0.2:0.32;x.fillStyle=tod==='night'?'#c9d4ff':'#fff8e0';
+  x.save();x.globalAlpha=tod==='night'?0.12:tod==='eve'?0.18:0.22;x.fillStyle=tod==='night'?'#c9d4ff':'#fff8e0';
   x.beginPath();x.moveTo(8,32);x.lineTo(26,32);x.lineTo(37,45);x.lineTo(14,45);x.closePath();x.fill();x.restore();
   // window
   R(wood,3,3,27,1);R(trim,5,4,23,19);
