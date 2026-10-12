@@ -1,0 +1,533 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<title>Cozy Quest Room</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Pixelify+Sans:wght@400;500;600;700&family=Mali:wght@400;500;600&family=Silkscreen&display=swap" rel="stylesheet">
+<style>
+/* Layout: a little pixel room up top (avatar, level, stats, mana), a pixel tab bar, then one game screen at a time */
+:root{
+  --bg:#fbeef0; --paper:#fffaf6; --ink:#5b3f4a; --ink-soft:#8d6c78; --line:#e6bfc8; --shadow:#ecc9d0; --dot:#f1d3d9;
+  --rose:#e98fa4; --rose-deep:#c65f79; --lilac:#b49ad8; --sage:#8db898; --butter:#f0c063; --wood:#b9805f; --on-accent:#fffaf6;
+  --s-wall:#f6c9cf; --s-wall2:#fbe0e3; --s-floor:#c98f6b; --s-floor2:#b57b59; --s-sky:#cfe9f1; --s-frame:#fff5ef; --s-curtain:#fffaf5; --s-night:0;
+  --f-display:"Pixelify Sans","Courier New",monospace;
+  --f-body:"Mali","Trebuchet MS",system-ui,sans-serif;
+  --f-ui:"Silkscreen","Courier New",monospace;
+}
+@media (prefers-color-scheme: dark){:root:not([data-theme="light"]){
+  --bg:#231a2a; --paper:#2f2438; --ink:#f5e4eb; --ink-soft:#bfa3b5; --line:#4f3c5a; --shadow:#140e19; --dot:#2d2234;
+  --rose:#ee9bb0; --rose-deep:#f6b6c6; --lilac:#c6b0f2; --sage:#93c7a3; --butter:#f2cd7c; --wood:#9a6b52; --on-accent:#2a1d2e;
+  --s-wall:#5a3d5e; --s-wall2:#6a4b6e; --s-floor:#6f4b3f; --s-floor2:#5c3d33; --s-sky:#28285a; --s-frame:#8a6a86; --s-curtain:#c9a9c4; --s-night:1;
+  color-scheme:dark}}
+:root[data-theme="dark"]{
+  --bg:#231a2a; --paper:#2f2438; --ink:#f5e4eb; --ink-soft:#bfa3b5; --line:#4f3c5a; --shadow:#140e19; --dot:#2d2234;
+  --rose:#ee9bb0; --rose-deep:#f6b6c6; --lilac:#c6b0f2; --sage:#93c7a3; --butter:#f2cd7c; --wood:#9a6b52; --on-accent:#2a1d2e;
+  --s-wall:#5a3d5e; --s-wall2:#6a4b6e; --s-floor:#6f4b3f; --s-floor2:#5c3d33; --s-sky:#28285a; --s-frame:#8a6a86; --s-curtain:#c9a9c4; --s-night:1;
+  color-scheme:dark}
+
+*{box-sizing:border-box}
+html{color-scheme:light}
+body{margin:0}
+body{background:var(--bg);color:var(--ink);font-family:var(--f-body);font-size:15px;line-height:1.5;
+  background-image:radial-gradient(var(--dot) 1.5px,transparent 2px);background-size:22px 22px}
+.wrap{max-width:1120px;margin:0 auto;padding-inline:16px;padding-block:22px 64px;display:grid;gap:20px}
+h1,h2,h3{font-family:var(--f-display);font-weight:600;margin:0;text-wrap:balance;letter-spacing:.01em}
+h2{font-size:22px}
+h3{font-size:17px}
+.label{font-family:var(--f-ui);font-size:11px;letter-spacing:.06em;text-transform:uppercase;color:var(--ink-soft)}
+.num{font-family:var(--f-ui);font-variant-numeric:tabular-nums}
+.card{background:var(--paper);border:3px solid var(--line);box-shadow:5px 5px 0 var(--shadow);padding:16px;min-width:0}
+.muted{color:var(--ink-soft)}
+
+/* top room */
+.top{display:grid;grid-template-columns:minmax(0,1.2fr) minmax(0,1fr);gap:20px}
+@media (max-width:860px){.top{grid-template-columns:1fr}}
+.room{display:grid;gap:14px}
+.sceneframe{position:relative}
+#scene{width:100%;max-width:100%;aspect-ratio:64/40;image-rendering:pixelated;display:block;border:3px solid var(--line);background:var(--s-wall)}
+.namebar{display:flex;flex-wrap:wrap;align-items:end;justify-content:space-between;gap:10px}
+.who{display:grid;gap:2px;min-width:0}
+#pname{font-family:var(--f-display);font-size:28px;font-weight:700;color:var(--ink);background:transparent;border:0;border-bottom:2px dashed transparent;padding:0;width:100%;max-width:16ch}
+#pname:hover,#pname:focus{border-bottom-color:var(--line);outline:none}
+.title{font-family:var(--f-ui);font-size:12px;color:var(--rose-deep)}
+.pills{display:flex;flex-wrap:wrap;gap:8px}
+.pill{font-family:var(--f-ui);font-size:12px;padding:4px 10px;border:2px solid var(--line);background:var(--bg);white-space:nowrap}
+.pill b{font-weight:400;color:var(--rose-deep)}
+.bar{height:16px;border:2px solid var(--ink-soft);background:var(--bg);position:relative}
+.bar>i{position:absolute;inset:0 auto 0 0;background:repeating-linear-gradient(90deg,var(--c,var(--rose)) 0 8px,color-mix(in srgb,var(--c,var(--rose)) 75%,var(--ink)) 8px 10px);transition:width .4s steps(8)}
+.xprow{display:grid;gap:4px}
+.xprow .meta{display:flex;justify-content:space-between;gap:8px}
+
+.side{display:grid;gap:16px;align-content:start}
+.stats{display:grid;gap:12px}
+.stat{display:grid;grid-template-columns:28px minmax(0,1fr) auto;gap:4px 10px;align-items:center}
+.stat .ic{grid-row:span 2;width:28px;height:28px;display:grid;place-items:center;font-family:var(--f-display);font-size:16px;background:var(--c);color:var(--on-accent);border:2px solid color-mix(in srgb,var(--c) 70%,var(--ink))}
+.stat .nm{font-family:var(--f-display);font-size:16px}
+.stat .bar{grid-column:2 / 4;height:12px}
+.mana{display:grid;gap:8px}
+.potions{display:flex;flex-wrap:wrap;gap:8px}
+.manatip{font-size:14px;margin:0}
+
+/* buttons */
+.btn{font-family:var(--f-ui);font-size:12px;color:var(--ink);background:var(--paper);border:2px solid var(--ink-soft);box-shadow:3px 3px 0 var(--shadow);padding:6px 10px;cursor:pointer;line-height:1.2}
+.btn:hover{background:var(--bg)}
+.btn:active{transform:translate(2px,2px);box-shadow:1px 1px 0 var(--shadow)}
+.btn.on,.btn.primary{background:var(--rose);color:var(--on-accent);border-color:var(--rose-deep)}
+.btn.ghost{box-shadow:none;border-color:transparent;background:transparent;color:var(--ink-soft);padding:4px 6px}
+.btn.ghost:hover{color:var(--rose-deep)}
+.btn:disabled{opacity:.45;cursor:not-allowed;transform:none}
+:focus-visible{outline:3px dashed var(--rose-deep);outline-offset:2px}
+
+/* tabs */
+.tabs{display:flex;flex-wrap:wrap;gap:10px}
+.tab{font-family:var(--f-display);font-size:16px;font-weight:500;color:var(--ink);background:var(--paper);border:3px solid var(--line);box-shadow:4px 4px 0 var(--shadow);padding:6px 14px;cursor:pointer}
+.tab[aria-selected="true"]{background:var(--rose);border-color:var(--rose-deep);color:var(--on-accent)}
+.tab:active{transform:translate(2px,2px);box-shadow:2px 2px 0 var(--shadow)}
+
+/* quests */
+.cols{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:20px;align-items:start}
+@media (max-width:760px){.cols{grid-template-columns:1fr}}
+.sechead{display:flex;justify-content:space-between;align-items:baseline;gap:10px;margin-bottom:10px;flex-wrap:wrap}
+.list{display:grid;gap:8px;list-style:none;margin:0;padding:0}
+.q{display:grid;grid-template-columns:auto minmax(0,1fr) auto auto;gap:10px;align-items:center;padding:8px 10px;border:2px solid var(--line);background:var(--bg);border-left:8px solid var(--c)}
+.q.done .qt{text-decoration:line-through;color:var(--ink-soft)}
+.q.hint{outline:2px dashed var(--c);outline-offset:2px}
+.check{width:26px;height:26px;border:2px solid var(--ink-soft);background:var(--paper);cursor:pointer;display:grid;place-items:center;font-family:var(--f-display);font-size:16px;color:var(--on-accent);padding:0}
+.q.done .check{background:var(--c);border-color:color-mix(in srgb,var(--c) 70%,var(--ink))}
+.qt{min-width:0;overflow-wrap:anywhere}
+.qt small{display:block;font-family:var(--f-ui);font-size:10px;color:var(--ink-soft);letter-spacing:.04em}
+.xp{font-family:var(--f-ui);font-size:11px;color:var(--rose-deep);white-space:nowrap}
+.addform{display:flex;flex-wrap:wrap;gap:8px;margin-top:12px}
+.addform input[type=text],.addform input[type=number],.addform select,.field{font-family:var(--f-body);font-size:14px;color:var(--ink);background:var(--bg);border:2px solid var(--line);padding:6px 8px;min-width:0}
+.addform input[type=text]{flex:1 1 180px}
+.addform input[type=number]{width:84px}
+.empty{padding:14px;border:2px dashed var(--line);color:var(--ink-soft);font-size:14px;text-align:center}
+
+/* skills */
+.trees{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:14px}
+@media (max-width:860px){.trees{grid-template-columns:repeat(2,minmax(0,1fr))}}
+@media (max-width:440px){.trees{grid-template-columns:1fr}}
+.tree{display:grid;gap:6px;justify-items:center;padding:12px 8px;border:2px solid var(--line);background:var(--bg)}
+.tree h3{text-align:center}
+.node{width:100%;max-width:190px;font-family:var(--f-body);font-size:13px;line-height:1.25;color:var(--ink);background:var(--paper);border:3px solid var(--line);padding:8px;cursor:pointer;text-align:center;position:relative}
+.node.ready{border-color:var(--c);box-shadow:0 0 0 3px color-mix(in srgb,var(--c) 30%,transparent)}
+.node.got{background:var(--c);border-color:color-mix(in srgb,var(--c) 70%,var(--ink));color:var(--on-accent)}
+.node.locked{opacity:.55}
+.node.sel{outline:3px dashed var(--rose-deep);outline-offset:2px}
+.link{width:4px;height:12px;background:var(--line)}
+.link.got{background:var(--c)}
+.nodedetail{display:grid;gap:10px;margin-top:16px;padding:14px;border:2px solid var(--line);background:var(--bg)}
+.nodedetail .row{display:flex;flex-wrap:wrap;gap:8px;align-items:center}
+.nodedetail input{flex:1 1 220px}
+
+/* bosses */
+.bosses{display:grid;grid-template-columns:repeat(auto-fill,minmax(260px,1fr));gap:16px}
+.boss{display:grid;gap:10px;padding:14px;border:3px solid var(--line);background:var(--bg)}
+.boss.dead{opacity:.7}
+.boss canvas{width:96px;height:96px;image-rendering:pixelated;justify-self:center}
+.boss .row{display:flex;justify-content:space-between;gap:8px;align-items:center;flex-wrap:wrap}
+
+/* shop & wardrobe */
+.shop{display:grid;grid-template-columns:repeat(auto-fill,minmax(200px,1fr));gap:12px}
+.item{display:grid;gap:8px;padding:12px;border:2px solid var(--line);background:var(--bg);align-content:space-between}
+.item .row{display:flex;justify-content:space-between;align-items:center;gap:8px}
+.ward{display:grid;grid-template-columns:repeat(auto-fill,minmax(150px,1fr));gap:10px}
+.ward .item.locked{opacity:.5}
+.swatches{display:flex;flex-wrap:wrap;gap:8px}
+.sw{width:30px;height:30px;border:3px solid var(--line);cursor:pointer;padding:0;background:var(--c)}
+.sw.on{border-color:var(--ink);box-shadow:3px 3px 0 var(--shadow)}
+
+/* journal */
+.week{display:flex;gap:6px;flex-wrap:wrap}
+.day{width:34px;display:grid;gap:4px;justify-items:center;font-family:var(--f-ui);font-size:10px;color:var(--ink-soft)}
+.day i{width:22px;height:22px;border:2px solid var(--line);background:var(--paper)}
+.day.on i{background:var(--rose);border-color:var(--rose-deep)}
+.log{list-style:none;margin:0;padding:0;display:grid}
+.log li{display:grid;grid-template-columns:76px minmax(0,1fr) auto;gap:10px;padding:7px 0;border-bottom:2px dotted var(--line);font-size:14px}
+
+.foot{display:flex;justify-content:space-between;gap:10px;flex-wrap:wrap;font-size:13px}
+#toast{position:fixed;left:50%;bottom:calc(18px + env(safe-area-inset-bottom,0px));transform:translateX(-50%);background:var(--ink);color:var(--paper);font-family:var(--f-display);font-size:15px;padding:10px 14px;border:3px solid var(--rose);box-shadow:4px 4px 0 var(--shadow);display:flex;gap:12px;align-items:center;z-index:20;max-width:calc(100% - 32px)}
+#toast .btn{background:var(--rose);color:var(--on-accent);border-color:var(--rose-deep);box-shadow:none}
+.confetti{position:fixed;width:8px;height:8px;z-index:30;pointer-events:none;animation:fall 1.3s steps(12) forwards}
+@keyframes fall{to{transform:translate(var(--dx),70vh) rotate(180deg);opacity:0}}
+@media (prefers-reduced-motion:reduce){.bar>i{transition:none}.confetti{display:none}}
+</style>
+</head>
+<body>
+
+
+<div class="wrap">
+  <section class="top">
+    <div class="card room">
+      <div class="sceneframe"><canvas id="scene" width="64" height="40" aria-label="Your pixel character in her cozy room"></canvas></div>
+      <div class="namebar">
+        <div class="who">
+          <label class="label" for="pname">Player</label>
+          <input id="pname" type="text" maxlength="24" autocomplete="off">
+          <span class="title" id="ptitle"></span>
+        </div>
+        <div class="pills" id="pills"></div>
+      </div>
+      <div class="xprow">
+        <div class="meta"><span class="label" id="lvl"></span><span class="label num" id="xptxt"></span></div>
+        <div class="bar"><i id="xpfill"></i></div>
+      </div>
+    </div>
+    <div class="side">
+      <div class="card">
+        <div class="sechead"><h2>Stats</h2><span class="label">grow by doing</span></div>
+        <div class="stats" id="stats"></div>
+      </div>
+      <div class="card mana">
+        <div class="sechead" style="margin:0"><h2>Mana check-in</h2><span class="label">today</span></div>
+        <div class="potions" id="potions"></div>
+        <p class="manatip" id="manatip"></p>
+      </div>
+    </div>
+  </section>
+
+  <nav class="tabs" role="tablist" id="tabs"></nav>
+  <section class="card" id="view"></section>
+
+  <div class="foot muted"><span id="savestate">Loading your save…</span><span>Tiny steps count. No streak ever breaks here.</span></div>
+</div>
+<div id="toast" hidden></div>
+
+<script>
+(()=>{
+const $=s=>document.querySelector(s);
+const esc=s=>String(s).replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+const uid=()=>Math.random().toString(36).slice(2,9);
+const today=()=>{const d=new Date();return d.getFullYear()+'-'+String(d.getMonth()+1).padStart(2,'0')+'-'+String(d.getDate()).padStart(2,'0')};
+const dayKey=d=>d.getFullYear()+'-'+String(d.getMonth()+1).padStart(2,'0')+'-'+String(d.getDate()).padStart(2,'0');
+
+const AREAS={
+  work:{name:'Teaching',stat:'Charisma',c:'var(--rose)',ic:'♥'},
+  study:{name:'Study & CPE',stat:'Wisdom',c:'var(--lilac)',ic:'✦'},
+  health:{name:'Self-care',stat:'Vitality',c:'var(--sage)',ic:'✿'},
+  create:{name:'Creative',stat:'Creativity',c:'var(--butter)',ic:'✎'}
+};
+const SIZES={tiny:{xp:10,label:'Tiny · ~5 min'},small:{xp:25,label:'Small · ~15 min'},medium:{xp:50,label:'Medium · ~1 hr'},big:{xp:100,label:'Big · half a day'}};
+const TITLES=[[1,'Apprentice of the Hearth'],[3,'Cozy Adventurer'],[5,'Hearth Mage'],[8,'Word Witch'],[12,'Mind Weaver'],[16,'Grand Tutor'],[20,'Living Legend']];
+const UNLOCKS=[
+  {k:'bow',lv:2,n:'Ribbon bow'},{k:'cat',lv:3,n:'Cat companion'},{k:'phones',lv:4,n:'Study headphones'},
+  {k:'book',lv:5,n:'Spellbook'},{k:'plant',lv:6,n:'Monstera'},{k:'lights',lv:8,n:'Fairy lights'},
+  {k:'crown',lv:10,n:'Tiny crown'},{k:'wings',lv:15,n:'Pixie wings'},{k:'aura',lv:20,n:'Legend sparkles'}];
+const HAIR={brown:'#6b4436',pink:'#e7a0b6',black:'#2e2430',blonde:'#e6c57a',lilac:'#ad93d6'};
+const SWEATER={lilac:'#b9a0dc',rose:'#ec9cb0',sage:'#94bf9f',butter:'#f1c86f',cream:'#f6ece0'};
+
+function fresh(){
+  const T=(a)=>a.map(n=>({id:uid(),n,on:false}));
+  return {v:1,name:'Polina',xp:0,coins:0,stats:{work:0,study:0,health:0,create:0},
+    mana:{d:'',v:''},
+    dailies:[['Drink water through the day','health','tiny'],['Eat one real meal','health','tiny'],['15 min CPE vocab','study','small'],['Reply to students','work','tiny'],['10 min outside or a stretch','health','tiny'],['Make one small creative thing','create','small']].map(([t,a,s])=>({id:uid(),t,a,s,done:''})),
+    quests:[['Plan this week’s lessons','work','medium'],['Do one CPE reading paper','study','medium'],['Post one piece of content','create','small'],['Write an essay and get feedback','study','big'],['Change the bedsheets','health','small']].map(([t,a,s])=>({id:uid(),t,a,s})),
+    bosses:[{id:uid(),name:'The CPE Dragon',a:'study',hp:40,max:40},{id:uid(),name:'Full Schedule Golem',a:'work',hp:25,max:25}],
+    shop:[['One episode of a show',20],['Guilt-free scroll, 20 min',25],['Fancy coffee or tea',35],['New sticker or stationery',60],['A whole lazy evening',120]].map(([t,cost])=>({id:uid(),t,cost})),
+    tree:{work:T(['Lesson Flow','Medical English','Student Magnet','Full Schedule','Signature Method']),
+          study:T(['Daily Vocab','Reading Stamina','Essay Craft','Mock Exam','CPE Certified']),
+          health:T(['Water Sprite','Sleep Ritual','Daily Movement','Rest Without Guilt','Steady Energy']),
+          create:T(['Canva Wizard','App Builder','Game Designer','Content Rhythm','Shipped Project'])},
+    look:{hair:'brown',sweater:'lilac',off:{}},
+    log:[],days:[],updated:0};
+}
+let S=fresh();
+let tab='quests', selNode=null, undoSnap=null;
+try{tab=localStorage.getItem('cqr-tab')||'quests'}catch(e){}
+
+/* ---------- math ---------- */
+function curve(xp,base,step){let l=1,need=base;while(xp>=need){xp-=need;l++;need+=step}return{l,into:xp,need}}
+const P=()=>curve(S.xp,100,40);
+const ST=a=>curve(S.stats[a],60,30);
+const unlockedCount=()=>Object.values(S.tree).flat().filter(n=>n.on).length;
+const sp=()=>P().l-unlockedCount();
+const titleFor=l=>TITLES.filter(t=>l>=t[0]).pop()[1];
+const isOn=k=>{const u=UNLOCKS.find(x=>x.k===k);return P().l>=u.lv && !S.look.off[k]};
+const manaToday=()=>S.mana.d===today()?S.mana.v:'';
+function weekDays(){const out=[];for(let i=6;i>=0;i--){const d=new Date();d.setDate(d.getDate()-i);out.push(dayKey(d))}return out}
+
+/* ---------- actions ---------- */
+function award(a,base,label){
+  const before=P().l;
+  const bonus=manaToday()==='low'&&base<=10?2:1;
+  const xp=base*bonus, coins=Math.max(1,Math.round(xp/5));
+  S.xp+=xp;S.stats[a]+=xp;S.coins+=coins;
+  S.log.unshift({d:today(),t:label,xp,coins});S.log=S.log.slice(0,80);
+  if(!S.days.includes(today()))S.days.push(today());S.days=S.days.slice(-60);
+  const after=P().l;
+  if(after>before){
+    const u=UNLOCKS.filter(x=>x.lv>before&&x.lv<=after).map(x=>x.n);
+    toast('Level '+after+'! +1 skill point'+(u.length?' · unlocked '+u.join(', '):''));confetti();
+  }
+  return {xp,coins};
+}
+function snap(){undoSnap=JSON.stringify(S)}
+function commit(){S.updated=Date.now();render();save()}
+
+const ACT={
+  tab(v){tab=v;try{localStorage.setItem('cqr-tab',v)}catch(e){}render()},
+  mana(v){S.mana={d:today(),v};commit()},
+  daily(id){
+    const q=S.dailies.find(x=>x.id===id);if(!q)return;
+    if(q.done===today()){ // un-tick: give it back
+      const g=q.gain||{xp:SIZES[q.s].xp,coins:Math.round(SIZES[q.s].xp/5)};
+      S.xp=Math.max(0,S.xp-g.xp);S.stats[q.a]=Math.max(0,S.stats[q.a]-g.xp);S.coins=Math.max(0,S.coins-g.coins);
+      const i=S.log.findIndex(l=>l.t===q.t&&l.d===today());if(i>-1)S.log.splice(i,1);
+      q.done='';q.gain=null;
+    } else {q.gain=award(q.a,SIZES[q.s].xp,q.t);q.done=today();toast('+'+q.gain.xp+' XP · '+AREAS[q.a].stat)}
+    commit()},
+  quest(id){
+    const q=S.quests.find(x=>x.id===id);if(!q)return;snap();
+    const g=award(q.a,SIZES[q.s].xp,q.t);S.quests=S.quests.filter(x=>x.id!==id);
+    commit();toast('Quest done · +'+g.xp+' XP, +'+g.coins+' coins',true)},
+  delquest(id){snap();S.quests=S.quests.filter(x=>x.id!==id);commit();toast('Quest removed',true)},
+  deldaily(id){snap();S.dailies=S.dailies.filter(x=>x.id!==id);commit();toast('Daily removed',true)},
+  hit(id){
+    const b=S.bosses.find(x=>x.id===id);if(!b||b.hp<=0)return;snap();
+    b.hp--;const g=award(b.a,15,'Hit '+b.name);
+    if(b.hp===0){const r=award(b.a,b.max*5,'Defeated '+b.name);toast(b.name+' defeated! +'+r.xp+' XP, +'+r.coins+' coins');confetti()}
+    else toast('Hit! '+b.name+' has '+b.hp+' HP left',true);
+    commit()},
+  heal(id){const b=S.bosses.find(x=>x.id===id);if(b&&b.hp<b.max){b.hp++;commit()}},
+  delboss(id){snap();S.bosses=S.bosses.filter(x=>x.id!==id);commit();toast('Boss removed',true)},
+  buy(id){
+    const it=S.shop.find(x=>x.id===id);if(!it)return;
+    if(S.coins<it.cost){toast('You need '+(it.cost-S.coins)+' more coins');return}
+    snap();S.coins-=it.cost;S.log.unshift({d:today(),t:'Bought: '+it.t,xp:0,coins:-it.cost});commit();toast('Enjoy it. You earned this.',true)},
+  delitem(id){snap();S.shop=S.shop.filter(x=>x.id!==id);commit();toast('Reward removed',true)},
+  node(id){selNode=selNode===id?null:id;render()},
+  unlock(id){
+    const f=findNode(id);if(!f||!canUnlock(f.a,f.i))return;snap();f.n.on=true;commit();toast('Skill unlocked: '+f.n.n,true);confetti()},
+  relock(id){const f=findNode(id);if(!f)return;const t=S.tree[f.a];if(t[f.i+1]&&t[f.i+1].on){toast('Lock the next skill in this branch first');return}f.n.on=false;commit()},
+  equip(k){S.look.off[k]=!S.look.off[k];commit()},
+  hair(v){S.look.hair=v;commit()},
+  sweater(v){S.look.sweater=v;commit()},
+  undo(){if(!undoSnap)return;S=JSON.parse(undoSnap);undoSnap=null;hideToast();commit()},
+  reset(){if(resetArm){S=fresh();resetArm=false;commit();toast('Fresh start. Level 1 again.')}else{resetArm=true;render();setTimeout(()=>{resetArm=false;render()},5000)}}
+};
+let resetArm=false;
+function findNode(id){for(const a in S.tree){const i=S.tree[a].findIndex(n=>n.id===id);if(i>-1)return{a,i,n:S.tree[a][i]}}}
+function canUnlock(a,i){const t=S.tree[a];return !t[i].on&&(i===0||t[i-1].on)&&ST(a).l>=i+1&&sp()>0}
+
+document.addEventListener('click',e=>{
+  const b=e.target.closest('[data-act]');if(!b)return;
+  const f=ACT[b.dataset.act];if(f)f(b.dataset.v);
+});
+document.addEventListener('submit',e=>{
+  const f=e.target;if(!f.dataset.form)return;e.preventDefault();
+  const v=n=>(f.elements[n]?.value||'').trim();
+  const t=f.dataset.form;
+  if(t==='quest'||t==='daily'){if(!v('t'))return;const q={id:uid(),t:v('t'),a:v('a'),s:v('s')};if(t==='daily'){q.done='';S.dailies.push(q)}else S.quests.unshift(q)}
+  if(t==='boss'){if(!v('t'))return;const hp=Math.max(1,Math.min(500,parseInt(v('hp'))||20));S.bosses.push({id:uid(),name:v('t'),a:v('a'),hp,max:hp})}
+  if(t==='item'){if(!v('t'))return;S.shop.push({id:uid(),t:v('t'),cost:Math.max(1,parseInt(v('cost'))||30)})}
+  commit();
+  const again=document.querySelector('form[data-form="'+t+'"] input[name=t]');if(again)again.focus();
+});
+document.addEventListener('change',e=>{
+  if(e.target.id==='pname'){S.name=e.target.value.trim()||'Player';commit()}
+  if(e.target.id==='noderename'&&selNode){const f=findNode(selNode);if(f&&e.target.value.trim()){f.n.n=e.target.value.trim();commit()}}
+});
+
+/* ---------- toast & confetti ---------- */
+let tt;
+function toast(msg,withUndo){
+  const el=$('#toast');el.innerHTML='<span>'+esc(msg)+'</span>'+(withUndo&&undoSnap?'<button class="btn" data-act="undo">Undo</button>':'');
+  el.hidden=false;clearTimeout(tt);tt=setTimeout(hideToast,withUndo?6000:3500)}
+function hideToast(){$('#toast').hidden=true}
+function confetti(){
+  if(matchMedia('(prefers-reduced-motion: reduce)').matches)return;
+  const cols=['var(--rose)','var(--lilac)','var(--butter)','var(--sage)'];
+  for(let i=0;i<28;i++){const d=document.createElement('i');d.className='confetti';
+    d.style.left=(30+Math.random()*40)+'vw';d.style.top=(8+Math.random()*10)+'vh';d.style.background=cols[i%4];
+    d.style.setProperty('--dx',(Math.random()*200-100)+'px');d.style.animationDelay=(Math.random()*.3)+'s';
+    document.body.appendChild(d);setTimeout(()=>d.remove(),1800)}
+}
+
+/* ---------- pixel scene ---------- */
+function drawScene(){
+  const c=$('#scene'),x=c.getContext('2d'),cs=getComputedStyle(document.documentElement),v=n=>cs.getPropertyValue(n).trim();
+  const R=(col,a,b,w,h)=>{x.fillStyle=col;x.fillRect(a,b,w,h)};
+  const night=v('--s-night')==='1';
+  x.clearRect(0,0,64,40);
+  R(v('--s-wall'),0,0,64,28);
+  for(let j=3,r=0;j<26;j+=6,r++)for(let i=2+(r%2)*3;i<64;i+=6)R(v('--s-wall2'),i,j,1,1);
+  R(v('--s-floor'),0,28,64,12);for(let j=31;j<40;j+=3)R(v('--s-floor2'),0,j,64,1);
+  R(v('--s-frame'),0,27,64,1);
+  // window
+  R(v('--wood'),3,2,22,1);R(v('--s-frame'),5,3,16,16);R(v('--s-sky'),6,4,14,14);
+  if(night){R('#f6e7b0',15,6,3,3);R(v('--s-sky'),16,6,1,1);[[8,6],[11,9],[17,13],[9,14],[13,5]].forEach(([a,b])=>R('#fff6d8',a,b,1,1))}
+  else{R('#ffffff',8,8,5,1);R('#ffffff',9,7,3,1);R('#ffffff',14,12,4,1);R('#ffffff',15,11,2,1);R('#bfe0a8',6,16,14,2)}
+  R(v('--s-frame'),12,4,1,14);R(v('--s-frame'),6,10,14,1);R(v('--s-frame'),4,19,18,1);
+  R(v('--s-curtain'),4,3,3,15);R(v('--s-curtain'),19,3,3,15);R(v('--s-curtain'),5,18,2,2);R(v('--s-curtain'),19,18,2,2);
+  // shelf
+  R(v('--wood'),44,13,15,1);R(v('--wood'),45,14,1,2);R(v('--wood'),57,14,1,2);
+  R(v('--rose'),45,10,2,3);R(v('--lilac'),48,9,2,4);R(v('--sage'),51,10,2,3);R(v('--butter'),54,8,1,5);R(v('--rose-deep'),55,9,1,4);R(v('--lilac'),56,8,1,5);
+  // picture
+  R(v('--wood'),46,17,9,7);R(v('--s-wall2'),47,18,7,5);R(v('--rose'),49,19,1,1);R(v('--rose'),51,19,1,1);R(v('--rose'),48,20,5,1);R(v('--rose'),49,21,3,1);R(v('--rose'),50,22,1,1);
+  // fairy lights
+  if(isOn('lights')){R(v('--ink-soft'),0,1,64,1);for(let i=1;i<64;i+=4)R(i%8===1?v('--butter'):v('--rose'),i,2,1,1)}
+  // rug
+  R(v('--rose'),18,35,28,3);R(v('--rose-deep'),20,34,24,1);R(v('--rose-deep'),20,38,24,1);for(let i=20;i<44;i+=3)R(v('--s-wall2'),i,36,1,1);
+  // plant
+  if(isOn('plant')){const g=v('--sage');R('#d98b6a',10,31,6,4);R('#c4775a',10,31,6,1);R(g,12,24,1,7);R(g,9,26,3,2);R(g,13,23,3,2);R(g,14,27,3,2);R(g,10,22,2,2);R('#6d9a79',11,26,1,1);R('#6d9a79',15,27,1,1)}
+  const H=HAIR[S.look.hair]||HAIR.brown,SW=SWEATER[S.look.sweater]||SWEATER.lilac;
+  const skin='#f6d3c0',eye='#3b2a33',blush='#f2a0ae',skirt='#6e5a7e',shoe='#5a3d3a';
+  // wings
+  if(isOn('wings')){const w='#fff4fb',o='#e7c3dc';R(o,21,19,6,8);R(w,22,20,5,6);R(o,37,19,6,8);R(w,37,20,5,6);R(o,20,21,1,4);R(o,43,21,1,4)}
+  // body
+  R(H,27,11,10,15);
+  R(SW,28,21,8,7);R(SW,27,22,1,5);R(SW,36,22,1,5);R('#fffaf5',31,21,2,1);
+  R(skin,27,27,1,1);R(skin,36,27,1,1);
+  if(isOn('book')){R(v('--lilac'),29,24,6,4);R('#fff6ee',30,25,4,2);R(v('--rose-deep'),32,24,1,4)}
+  R(skirt,28,28,8,3);R(skin,29,31,2,3);R(skin,33,31,2,3);R(shoe,29,34,2,1);R(shoe,33,34,2,1);
+  R(skin,28,12,8,9);
+  R(H,28,10,8,3);R(H,27,11,1,4);R(H,36,11,1,4);R(H,28,13,8,1);R(H,28,14,2,1);R(H,34,14,2,1);
+  R(eye,30,16,1,2);R(eye,33,16,1,2);R(blush,29,18,1,1);R(blush,34,18,1,1);R('#c9627b',31,19,2,1);
+  if(isOn('phones')){R('#7d6a8a',28,9,8,1);R('#7d6a8a',27,10,1,2);R('#7d6a8a',36,10,1,2);R(v('--rose'),26,14,2,4);R(v('--rose'),36,14,2,4)}
+  if(isOn('bow')){R(v('--rose'),33,8,2,3);R(v('--rose'),36,8,2,3);R(v('--rose-deep'),35,9,1,1)}
+  if(isOn('crown')){const g='#f2c46b',gd='#d9a441';R(g,29,8,6,2);R(g,29,6,1,2);R(g,31,5,2,3);R(g,34,6,1,2);R(gd,29,9,6,1);R(v('--rose'),31,8,2,1)}
+  // cat
+  if(isOn('cat')){const c1=night?'#e9dccd':'#f6ead9',c2='#e2b48f';R(c1,44,31,7,4);R(c1,48,28,5,4);R(c1,48,27,1,1);R(c1,52,27,1,1);R(eye,49,29,1,1);R(eye,51,29,1,1);R(blush,50,30,1,1);R(c2,45,31,1,3);R(c2,47,31,1,3);R(c1,42,30,2,1);R(c1,42,29,1,1);R(c1,44,35,1,1);R(c1,49,35,1,1)}
+  if(isOn('aura')){[[24,12],[40,10],[22,24],[42,22],[26,6],[38,28]].forEach(([a,b])=>{R('#fff2b0',a,b,1,1);R(v('--butter'),a-1,b,1,1);R(v('--butter'),a+1,b,1,1);R(v('--butter'),a,b-1,1,1);R(v('--butter'),a,b+1,1,1)})}
+}
+function drawBoss(cv,b){
+  const x=cv.getContext('2d'),cs=getComputedStyle(document.documentElement);const col=cs.getPropertyValue(AREAS[b.a].c.slice(4,-1)).trim();
+  const R=(c,a,y,w,h)=>{x.fillStyle=c;x.fillRect(a,y,w,h)};x.clearRect(0,0,24,24);
+  const dark='#3b2a33',dead=b.hp<=0;
+  R(col,6,7,12,11);R(col,4,9,2,6);R(col,18,9,2,6);R(col,7,5,2,2);R(col,15,5,2,2);R(col,8,18,3,3);R(col,13,18,3,3);
+  if(b.a==='study'){R(col,2,6,4,3);R(col,18,6,4,3);R(col,1,5,2,2);R(col,21,5,2,2)}
+  if(dead){R(dark,8,10,3,1);R(dark,9,9,1,3);R(dark,13,10,3,1);R(dark,14,9,1,3)}
+  else{R(dark,9,10,2,2);R(dark,14,10,2,2);R('#ffffff',9,10,1,1);R('#ffffff',14,10,1,1)}
+  R(dark,10,14,5,1);R('#ffffff',11,15,1,1);R('#ffffff',13,15,1,1);R('#f2a0ae',7,13,2,1);R('#f2a0ae',16,13,2,1);
+}
+
+/* ---------- render ---------- */
+const areaOpts=sel=>Object.entries(AREAS).map(([k,a])=>'<option value="'+k+'"'+(k===sel?' selected':'')+'>'+a.name+'</option>').join('');
+const sizeOpts=sel=>Object.entries(SIZES).map(([k,s])=>'<option value="'+k+'"'+(k===sel?' selected':'')+'>'+s.label+' · '+s.xp+' XP</option>').join('');
+
+function render(){
+  const p=P(),mana=manaToday();
+  const nm=$('#pname');if(document.activeElement!==nm)nm.value=S.name;
+  $('#ptitle').textContent=titleFor(p.l);
+  $('#lvl').textContent='Level '+p.l;
+  $('#xptxt').textContent=p.into+' / '+p.need+' XP';
+  $('#xpfill').style.width=(p.into/p.need*100)+'%';
+  const wk=weekDays().filter(d=>S.days.includes(d)).length;
+  $('#pills').innerHTML='<span class="pill">Coins <b class="num">'+S.coins+'</b></span><span class="pill">Skill pts <b class="num">'+sp()+'</b></span><span class="pill">This week <b class="num">'+wk+'/7</b></span>';
+  $('#stats').innerHTML=Object.entries(AREAS).map(([k,a])=>{const s=ST(k);return '<div class="stat" style="--c:'+a.c+'"><span class="ic" aria-hidden="true">'+a.ic+'</span><span class="nm">'+a.stat+' <span class="label">· '+a.name+'</span></span><span class="label num">Lv '+s.l+'</span><div class="bar"><i style="width:'+(s.into/s.need*100)+'%"></i></div></div>'}).join('');
+  const pots=[['low','Low mana'],['mid','Steady'],['high','Full mana']];
+  $('#potions').innerHTML=pots.map(([k,l])=>'<button class="btn'+(mana===k?' on':'')+'" data-act="mana" data-v="'+k+'" aria-pressed="'+(mana===k)+'">'+l+'</button>').join('');
+  $('#manatip').textContent={low:'Low mana day. Tiny quests give double XP today, and one tiny thing is a win.',mid:'Steady day. Pick whatever feels doable and stop when it stops being fun.',high:'Full mana. A good day for a Big quest or a few boss hits.'}[mana]||'How much energy do you have today? Tap one, it changes which quests glow.';
+  const tabs=[['quests','Quests'],['skills','Skill trees'],['bosses','Bosses'],['shop','Reward shop'],['wardrobe','Wardrobe'],['journal','Journal']];
+  $('#tabs').innerHTML=tabs.map(([k,l])=>'<button class="tab" role="tab" aria-selected="'+(tab===k)+'" data-act="tab" data-v="'+k+'">'+l+'</button>').join('');
+  $('#view').innerHTML=({quests:vQuests,skills:vSkills,bosses:vBosses,shop:vShop,wardrobe:vWardrobe,journal:vJournal}[tab]||vQuests)();
+  if(tab==='bosses')document.querySelectorAll('canvas[data-boss]').forEach(cv=>{const b=S.bosses.find(x=>x.id===cv.dataset.boss);if(b)drawBoss(cv,b)});
+  drawScene();
+}
+function qRow(q,daily){
+  const a=AREAS[q.a],s=SIZES[q.s],done=daily&&q.done===today(),mana=manaToday();
+  const hint=!done&&((mana==='low'&&q.s==='tiny')||(mana==='high'&&(q.s==='big'||q.s==='medium')));
+  const xp=mana==='low'&&s.xp<=10?s.xp*2:s.xp;
+  return '<li class="q'+(done?' done':'')+(hint?' hint':'')+'" style="--c:'+a.c+'">'+
+    '<button class="check" data-act="'+(daily?'daily':'quest')+'" data-v="'+q.id+'" aria-label="'+(done?'Undo ':'Complete ')+esc(q.t)+'">'+(done?'✓':'')+'</button>'+
+    '<span class="qt">'+esc(q.t)+'<small>'+a.name.toUpperCase()+' · '+s.label.split(' · ')[0].toUpperCase()+'</small></span>'+
+    '<span class="xp">+'+xp+' XP</span>'+
+    '<button class="btn ghost" data-act="'+(daily?'deldaily':'delquest')+'" data-v="'+q.id+'" aria-label="Remove '+esc(q.t)+'">✕</button></li>';
+}
+function vQuests(){
+  const dd=S.dailies.filter(q=>q.done===today()).length;
+  return '<div class="cols"><div>'+
+    '<div class="sechead"><h2>Daily quests</h2><span class="label num">'+dd+'/'+S.dailies.length+' today · optional</span></div>'+
+    (S.dailies.length?'<ul class="list">'+S.dailies.map(q=>qRow(q,true)).join('')+'</ul>':'<div class="empty">No dailies yet. Add one small thing you’d like to do most days.</div>')+
+    '<form class="addform" data-form="daily"><input id="d-t" name="t" type="text" placeholder="New daily quest" aria-label="New daily quest"><select id="d-a" name="a" aria-label="Area">'+areaOpts('health')+'</select><select id="d-s" name="s" aria-label="Size">'+sizeOpts('tiny')+'</select><button class="btn primary">Add daily</button></form>'+
+    '<p class="muted" style="font-size:13px;margin:10px 0 0">Dailies reset at midnight. Missing one costs nothing.</p>'+
+    '</div><div>'+
+    '<div class="sechead"><h2>Quest log</h2><span class="label num">'+S.quests.length+' open</span></div>'+
+    (S.quests.length?'<ul class="list">'+S.quests.map(q=>qRow(q,false)).join('')+'</ul>':'<div class="empty">Quest log is clear. Add whatever is floating around in your head.</div>')+
+    '<form class="addform" data-form="quest"><input id="q-t" name="t" type="text" placeholder="New quest" aria-label="New quest"><select id="q-a" name="a" aria-label="Area">'+areaOpts('work')+'</select><select id="q-s" name="s" aria-label="Size">'+sizeOpts('small')+'</select><button class="btn primary">Add quest</button></form>'+
+    '</div></div>';
+}
+function vSkills(){
+  let detail='';
+  const f=selNode&&findNode(selNode);
+  if(f){const a=AREAS[f.a],t=S.tree[f.a],need=f.i+1,stl=ST(f.a).l,prevOk=f.i===0||t[f.i-1].on;
+    let why='';if(!f.n.on){if(!prevOk)why='Unlock “'+t[f.i-1].n+'” first.';else if(stl<need)why='Needs '+a.stat+' level '+need+' (you have '+stl+').';else if(sp()<1)why='No skill points left. You get one every level up.'}
+    detail='<div class="nodedetail" style="--c:'+a.c+'"><div class="row"><span class="label">'+a.name+' branch · skill '+(f.i+1)+' of 5</span></div>'+
+      '<div class="row"><input class="field" id="noderename" type="text" maxlength="40" value="'+esc(f.n.n)+'" aria-label="Skill name"><span class="label">rename it to your own goal</span></div>'+
+      '<div class="row">'+(f.n.on?'<span class="pill">Unlocked</span><button class="btn ghost" data-act="relock" data-v="'+f.n.id+'">Lock again</button>':'<button class="btn primary" data-act="unlock" data-v="'+f.n.id+'"'+(canUnlock(f.a,f.i)?'':' disabled')+'>Unlock · 1 skill point</button><span class="muted" style="font-size:14px">'+esc(why)+'</span>')+'</div></div>';
+  }
+  return '<div class="sechead"><h2>Skill trees</h2><span class="label">'+sp()+' skill point'+(sp()===1?'':'s')+' to spend</span></div>'+
+    '<p class="muted" style="margin:0 0 14px;font-size:14px">Each branch grows with its stat. Tap a skill to rename it or unlock it.</p>'+
+    '<div class="trees">'+Object.entries(AREAS).map(([k,a])=>'<div class="tree" style="--c:'+a.c+'"><h3>'+a.name+'</h3><span class="label">'+a.stat+' Lv '+ST(k).l+'</span>'+
+      S.tree[k].map((n,i)=>{const cls=n.on?'got':(canUnlock(k,i)?'ready':((i===0||S.tree[k][i-1].on)&&ST(k).l>=i+1?'':'locked'));
+        return (i?'<span class="link'+(n.on?' got':'')+'"></span>':'')+'<button class="node '+cls+(selNode===n.id?' sel':'')+'" data-act="node" data-v="'+n.id+'">'+esc(n.n)+'</button>'}).join('')+'</div>').join('')+'</div>'+detail;
+}
+function vBosses(){
+  return '<div class="sechead"><h2>Boss battles</h2><span class="label">big goals, one hit at a time</span></div>'+
+  '<p class="muted" style="margin:0 0 14px;font-size:14px">Every hit is one session of work toward the goal (+15 XP). Defeating a boss pays out 5 XP per HP.</p>'+
+  (S.bosses.length?'<div class="bosses">'+S.bosses.map(b=>{const a=AREAS[b.a],dead=b.hp<=0;return '<div class="boss'+(dead?' dead':'')+'" style="--c:'+a.c+'"><canvas width="24" height="24" data-boss="'+b.id+'" aria-hidden="true"></canvas>'+
+    '<div class="row"><h3>'+esc(b.name)+'</h3><span class="label">'+a.name+'</span></div>'+
+    '<div class="row"><span class="label num">HP '+b.hp+' / '+b.max+'</span><span class="label">'+(dead?'Defeated':'+'+b.max*5+' XP reward')+'</span></div>'+
+    '<div class="bar" style="--c:'+a.c+'"><i style="width:'+(b.hp/b.max*100)+'%"></i></div>'+
+    '<div class="row">'+(dead?'<span class="pill">Victory</span>':'<button class="btn primary" data-act="hit" data-v="'+b.id+'">Hit · did a session</button><button class="btn ghost" data-act="heal" data-v="'+b.id+'" aria-label="Give back one HP">+1 HP</button>')+'<button class="btn ghost" data-act="delboss" data-v="'+b.id+'">Remove</button></div></div>'}).join('')+'</div>'
+  :'<div class="empty">No bosses yet. Turn a big goal into one below.</div>')+
+  '<form class="addform" data-form="boss"><input id="b-t" name="t" type="text" placeholder="Boss name, e.g. Portfolio Hydra" aria-label="Boss name"><select id="b-a" name="a" aria-label="Area">'+areaOpts('study')+'</select><input id="b-hp" name="hp" type="number" min="1" max="500" value="20" aria-label="HP, the number of sessions"><button class="btn primary">Summon boss</button></form>';
+}
+function vShop(){
+  return '<div class="sechead"><h2>Reward shop</h2><span class="label num">'+S.coins+' coins in your purse</span></div>'+
+  '<p class="muted" style="margin:0 0 14px;font-size:14px">Every quest drops coins. Spend them on things you’d enjoy anyway, without the guilt.</p>'+
+  (S.shop.length?'<div class="shop">'+S.shop.map(it=>'<div class="item"><span>'+esc(it.t)+'</span><div class="row"><button class="btn'+(S.coins>=it.cost?' primary':'')+'" data-act="buy" data-v="'+it.id+'">Buy · '+it.cost+'</button><button class="btn ghost" data-act="delitem" data-v="'+it.id+'" aria-label="Remove '+esc(it.t)+'">✕</button></div></div>').join('')+'</div>'
+  :'<div class="empty">The shop is empty. Stock it with treats.</div>')+
+  '<form class="addform" data-form="item"><input id="i-t" name="t" type="text" placeholder="New reward" aria-label="New reward"><input id="i-c" name="cost" type="number" min="1" value="30" aria-label="Cost in coins"><button class="btn primary">Add reward</button></form>';
+}
+function vWardrobe(){
+  const l=P().l;
+  return '<div class="sechead"><h2>Wardrobe</h2><span class="label">your character evolves as you level</span></div>'+
+  '<div class="cols" style="margin-bottom:18px"><div><span class="label">Hair</span><div class="swatches" style="margin-top:6px">'+Object.entries(HAIR).map(([k,c])=>'<button class="sw'+(S.look.hair===k?' on':'')+'" style="--c:'+c+'" data-act="hair" data-v="'+k+'" aria-label="'+k+' hair"></button>').join('')+'</div></div>'+
+  '<div><span class="label">Sweater</span><div class="swatches" style="margin-top:6px">'+Object.entries(SWEATER).map(([k,c])=>'<button class="sw'+(S.look.sweater===k?' on':'')+'" style="--c:'+c+'" data-act="sweater" data-v="'+k+'" aria-label="'+k+' sweater"></button>').join('')+'</div></div></div>'+
+  '<div class="ward">'+UNLOCKS.map(u=>{const got=l>=u.lv,on=got&&!S.look.off[u.k];return '<div class="item'+(got?'':' locked')+'"><span>'+u.n+'</span><div class="row"><span class="label">Lv '+u.lv+'</span>'+(got?'<button class="btn'+(on?' on':'')+'" data-act="equip" data-v="'+u.k+'" aria-pressed="'+on+'">'+(on?'Wearing':'Wear')+'</button>':'<span class="label">locked</span>')+'</div></div>'}).join('')+'</div>';
+}
+function vJournal(){
+  const days=weekDays(),names=['Su','Mo','Tu','We','Th','Fr','Sa'];
+  return '<div class="sechead"><h2>Adventure journal</h2><span class="label">last 7 days</span></div>'+
+  '<div class="week" style="margin-bottom:16px">'+days.map(d=>{const dt=new Date(d+'T12:00');return '<span class="day'+(S.days.includes(d)?' on':'')+'"><i></i>'+names[dt.getDay()]+'</span>'}).join('')+'</div>'+
+  (S.log.length?'<ul class="log">'+S.log.slice(0,40).map(l=>'<li><span class="label num">'+l.d.slice(5)+'</span><span>'+esc(l.t)+'</span><span class="xp">'+(l.xp?'+'+l.xp+' XP':l.coins+' coins')+'</span></li>').join('')+'</ul>'
+  :'<div class="empty">Your journal fills itself as you finish quests.</div>')+
+  '<div style="margin-top:20px;display:flex;gap:10px;align-items:center;flex-wrap:wrap"><button class="btn ghost" data-act="reset">'+(resetArm?'Tap again to erase everything':'Start over from level 1')+'</button></div>';
+}
+
+/* ---------- saving ---------- */
+let docRef=null,saveT=null;
+function save(){
+  try{localStorage.setItem('cqr-save',JSON.stringify(S))}catch(e){}
+  clearTimeout(saveT);
+  saveT=setTimeout(async()=>{if(!docRef)return;try{await docRef.set({json:JSON.stringify(S),updated:S.updated});$('#savestate').textContent='Saved to your account'}catch(e){$('#savestate').textContent='Saved on this device (account save failed)'}},700);
+}
+function adopt(o){if(o&&o.v===1){const f=fresh();S=Object.assign(f,o,{look:Object.assign(f.look,o.look||{}),stats:Object.assign(f.stats,o.stats||{})})}}
+try{const l=localStorage.getItem('cqr-save');if(l)adopt(JSON.parse(l))}catch(e){}
+$('#savestate').textContent='Saved on this device';
+render();
+['(prefers-color-scheme: dark)'].forEach(q=>matchMedia(q).addEventListener('change',()=>render()));
+new MutationObserver(()=>render()).observe(document.documentElement,{attributes:true,attributeFilter:['data-theme']});
+
+(async()=>{
+  try{
+    if(!window.claude||!window.claude.use)return;
+    const [db,user]=await Promise.all([window.claude.use('db'),window.claude.use('user')]);
+    if(!db||!user)return;
+    const id=await user.id();if(!id)return;
+    docRef=db.collection('data/users/'+id).doc('save');
+    const snapd=await docRef.get();
+    if(snapd.exists){const d=snapd.data();if(d&&d.json&&(d.updated||0)>=(S.updated||0)){adopt(JSON.parse(d.json));try{localStorage.setItem('cqr-save',d.json)}catch(e){}render()}else save()}
+    else save();
+    $('#savestate').textContent='Saved to your account';
+  }catch(e){}
+})();
+})();
+</script>
+
+</body>
+</html>
