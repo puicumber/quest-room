@@ -31,11 +31,11 @@
 :root[data-skin="matcha"]{--bg:#f9fbf5;--wash:#eef7e8;--line:#dceada;--rule:#cfe2c6;--acc:#b5dbad;--acc-deep:#8cc282;--acc-ink:#4f8a46;--s-wall:#e6f3de;--s-wall2:#f3faee;--s-floor:#e3cfb3;--s-floor2:#d4bd9d}
 :root[data-skin="peach"]{--bg:#fffaf5;--wash:#fff0e5;--line:#f8e1d0;--rule:#f2d2bb;--acc:#f9c19f;--acc-deep:#ef9f74;--acc-ink:#b8643a;--s-wall:#feeadc;--s-wall2:#fff5ee;--s-floor:#e9c8a6;--s-floor2:#dbb48f}
 @media (prefers-color-scheme: dark){:root:not([data-theme="light"]){
-  --bg:#2a2230;--paper:#332a3a;--wash:#3c3144;--ink:#f6e9f0;--ink-soft:#c5afbd;--line:#4a3d54;--rule:#5a4a65;--shadow:rgba(0,0,0,.28);--acc-ink:var(--acc);
-  --s-wall:#4a3a55;--s-wall2:#544360;--s-floor:#5e4840;--s-floor2:#513d36;--s-trim:#806c8a;--s-wood:#8a6450;--s-curtain:#cdb7d2;--s-dark:1;color-scheme:dark}}
+  --bg:#2b2421;--paper:#352d29;--wash:#40362f;--ink:#f7ece4;--ink-soft:#c9b6a8;--line:#4d423b;--rule:#5e5047;--shadow:rgba(0,0,0,.28);--acc-ink:var(--acc);
+  --s-wall:#5a4a40;--s-wall2:#655448;--s-floor:#6b5243;--s-floor2:#5c4639;--s-trim:#8c786a;--s-wood:#9a7158;--s-curtain:#e3d3c6;--s-dark:1;color-scheme:dark}}
 :root[data-theme="dark"]{
-  --bg:#2a2230;--paper:#332a3a;--wash:#3c3144;--ink:#f6e9f0;--ink-soft:#c5afbd;--line:#4a3d54;--rule:#5a4a65;--shadow:rgba(0,0,0,.28);--acc-ink:var(--acc);
-  --s-wall:#4a3a55;--s-wall2:#544360;--s-floor:#5e4840;--s-floor2:#513d36;--s-trim:#806c8a;--s-wood:#8a6450;--s-curtain:#cdb7d2;--s-dark:1;color-scheme:dark}
+  --bg:#2b2421;--paper:#352d29;--wash:#40362f;--ink:#f7ece4;--ink-soft:#c9b6a8;--line:#4d423b;--rule:#5e5047;--shadow:rgba(0,0,0,.28);--acc-ink:var(--acc);
+  --s-wall:#5a4a40;--s-wall2:#655448;--s-floor:#6b5243;--s-floor2:#5c4639;--s-trim:#8c786a;--s-wood:#9a7158;--s-curtain:#e3d3c6;--s-dark:1;color-scheme:dark}
 
 *{box-sizing:border-box}
 html{color-scheme:light}
@@ -401,7 +401,7 @@ function fresh(){
           create:T(['Canva Wizard','App Builder','Game Designer','Content Rhythm','Shipped Project']),
           rest:T(['Guilt-Free Pause','Nap Mastery','Slow Mornings','Gentle Boundaries','Inner Calm'])},
     look:{hair:'brown',sweater:'lilac',off:{},pet:'cat'},
-    skin:'strawberry',skins:['strawberry','lavender'],mode:'auto',sound:true,
+    skin:'strawberry',skins:['strawberry','lavender'],mode:'light',modeV2:true,sound:true,
     focus:null,enc:{cur:null,last:0},combo:[],ach:{},
     counts:{done:0,hits:0,bosses:0,focus:0,rest:0,water:0,lowDays:[],maxCombo:0,dumps:0,buys:0,enc:0,welcome:0,books:0,watched:0},
     lib:[],log:[],days:[],lastSeen:0,updated:0};
@@ -428,6 +428,7 @@ function adopt(o){
   if(!SKINS[S.skin])S.skin='strawberry';
   if(typeof S.sound!=='boolean')S.sound=true;
   if(!Array.isArray(S.lib))S.lib=[];
+  if(!S.modeV2){S.mode='light';S.modeV2=true}
   return true;
 }
 
@@ -1070,7 +1071,7 @@ function vLibrary(){
 function vSave(){
   return '<div class="stack">'+
   '<div class="block"><h2>Look & sound</h2>'+
-    '<div class="seg"><span class="label">Brightness</span>'+[['auto','Match my device'],['light','Always light'],['dark','Always dark']].map(([k,l])=>'<button class="btn'+(S.mode===k?' on':'')+'" data-act="mode" data-v="'+k+'" aria-pressed="'+(S.mode===k)+'">'+l+'</button>').join('')+'</div>'+
+    '<div class="seg"><span class="label">Brightness</span>'+[['light','Light'],['dark','Cocoa dark'],['auto','Match my device']].map(([k,l])=>'<button class="btn'+(S.mode===k?' on':'')+'" data-act="mode" data-v="'+k+'" aria-pressed="'+(S.mode===k)+'">'+l+'</button>').join('')+'</div>'+
     '<div class="seg"><span class="label">Sounds</span><button class="btn'+(S.sound?' on':'')+'" data-act="sound" aria-pressed="'+S.sound+'">'+(S.sound?'On':'Off')+'</button></div></div>'+
   '<div class="block"><h2>Move your save</h2><p class="note">Your progress lives in this browser. To keep playing on another device, copy your save code here and load it there.</p>'+
     '<div class="seg"><button class="btn primary" data-act="exportcopy">Copy save code</button><button class="btn" data-act="exportdl">Download save file</button></div>'+
