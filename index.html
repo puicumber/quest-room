@@ -404,7 +404,7 @@ function fresh(){
     skin:'strawberry',skins:['strawberry','lavender'],mode:'light',modeV2:true,sound:true,
     focus:null,enc:{cur:null,last:0},combo:[],ach:{},
     counts:{done:0,hits:0,bosses:0,focus:0,rest:0,water:0,lowDays:[],maxCombo:0,dumps:0,buys:0,enc:0,welcome:0,books:0,watched:0},
-    lib:[],log:[],days:[],lastSeen:0,updated:0};
+    lib:[],log:[],days:[],cq:null,showAll:false,lastSeen:0,updated:0};
 }
 let S=fresh();
 let tab='quests',selNode=null,undoSnap=null,resetArm=false;
@@ -428,6 +428,7 @@ function adopt(o){
   if(!SKINS[S.skin])S.skin='strawberry';
   if(typeof S.sound!=='boolean')S.sound=true;
   if(!Array.isArray(S.lib))S.lib=[];
+  if(S.cq&&!Array.isArray(S.cq.quests))S.cq=null;
   if(!S.modeV2){S.mode='light';S.modeV2=true}
   return true;
 }
@@ -599,6 +600,15 @@ const ACT={
     const q=S.quests.find(x=>x.id===id);if(!q)return;snap();
     const g=award(q.a,SIZES[q.s].xp,q.t,'quest');S.quests=S.quests.filter(x=>x.id!==id);
     maybeEncounter(.18,45*6e4);commit();toast('Quest done · +'+g.xp+' XP, +'+g.coins+' coins',true)},
+  cq(id){
+    const c=S.cq;if(!c||c.date!==today())return;const q=c.quests.find(x=>x.id===id);if(!q)return;
+    if(q.done){const g=q.gain||{xp:SIZES[q.s].xp,coins:Math.round(SIZES[q.s].xp/5)};
+      S.xp=Math.max(0,S.xp-g.xp);S.stats[q.a]=Math.max(0,(S.stats[q.a]||0)-g.xp);S.coins=Math.max(0,S.coins-g.coins);
+      const i=S.log.findIndex(l=>l.t===q.t&&l.d===today());if(i>-1)S.log.splice(i,1);q.done=false;q.gain=null}
+    else{q.gain=award(q.a,SIZES[q.s].xp,q.t,'quest');q.done=true;
+      const n=c.quests.filter(x=>x.done).length;toast(n===1?'Day counted! +'+q.gain.xp+' XP':'+'+q.gain.xp+' XP · '+n+'/'+c.quests.length+' today');maybeEncounter(.18,45*6e4)}
+    commit()},
+  showall(){S.showAll=!S.showAll;commit()},
   delquest(id){snap();S.quests=S.quests.filter(x=>x.id!==id);commit();toast('Quest removed',true)},
   deldaily(id){snap();S.dailies=S.dailies.filter(x=>x.id!==id);commit();toast('Daily removed',true)},
   hit(id){snap();doHit(S.bosses.find(x=>x.id===id));commit()},
@@ -912,6 +922,16 @@ function qRow(q,daily){
     '<span class="xp">+'+xp+' XP</span>'+
     '<button class="btn ghost" data-act="'+(daily?'deldaily':'delquest')+'" data-v="'+q.id+'" aria-label="Remove '+esc(q.t)+'">✕</button></li>';
 }
+function vClaude(c){
+  const n=c.quests.filter(q=>q.done).length;
+  const row=q=>{const s=SIZES[q.s]||SIZES.small;return '<li class="q'+(q.done?' done':'')+'" style="--c:'+cv(q.a)+'">'+
+    '<button class="check" data-act="cq" data-v="'+q.id+'" aria-label="'+(q.done?'Undo ':'Complete ')+esc(q.t)+'">'+(q.done?'✓':'')+'</button>'+
+    '<span class="qt">'+esc(q.t)+'<small>'+AREAS[q.a].name.toUpperCase()+' · '+s.label.split(' · ')[0].toUpperCase()+'</small></span>'+
+    '<span class="xp">+'+s.xp+' XP</span></li>'};
+  return '<div class="sechead"><h2>Today’s quests</h2><span class="label num">'+(n?n+'/'+c.quests.length+' · day counted ✓':'one is enough')+'</span></div>'+
+    (c.note?'<p class="note">'+esc(c.note)+'</p>':'')+
+    '<ul class="list">'+c.quests.map(row).join('')+'</ul>';
+}
 function vQuests(){
   const dd=S.dailies.filter(q=>q.done===today()).length;
   let dump='';
@@ -921,7 +941,11 @@ function vQuests(){
       '<div class="seg"><button class="btn primary" data-act="dumpsort">Sort into quests</button><button class="btn ghost" data-act="dump">Close</button></div>'+
       (dumpRows.length?'<p class="note">I guessed the area and size for each one. Fix anything that looks off, then add them all.</p><div class="list">'+dumpRows.map((r,i)=>'<div class="drow"><input type="text" id="dr-t-'+i+'" data-dr="'+i+'" data-f="t" value="'+esc(r.t)+'" aria-label="Quest text"><select id="dr-a-'+i+'" data-dr="'+i+'" data-f="a" aria-label="Area">'+areaOpts(r.a)+'</select><select id="dr-s-'+i+'" data-dr="'+i+'" data-f="s" aria-label="Size">'+sizeOpts(r.s,true)+'</select><button class="btn ghost" data-act="dumpdel" data-v="'+i+'" aria-label="Remove '+esc(r.t)+'">✕</button></div>').join('')+'</div><div class="seg"><button class="btn primary" data-act="dumpadd">Add all '+dumpRows.length+' to the quest log</button><button class="btn ghost" data-act="dumpclear">Clear</button></div>':'')+'</div>';
   }
-  return '<div class="toolbar"><button class="btn'+(dumpOpen?' on':'')+'" data-act="dump" aria-expanded="'+dumpOpen+'">Brain dump</button><span class="note">Rest is a quest too. Finish 3 within an hour for a combo.</span></div>'+dump+
+  const c=S.cq&&S.cq.date===today()?S.cq:null;
+  if(c&&!S.showAll){
+    return vClaude(c)+'<div class="seg" style="margin-top:14px"><button class="btn ghost" data-act="showall">Show my full quest log</button></div>';
+  }
+  return (c?vClaude(c)+'<div class="seg" style="margin:10px 0 14px"><button class="btn ghost" data-act="showall">Just today’s three</button></div>':'')+'<div class="toolbar"><button class="btn'+(dumpOpen?' on':'')+'" data-act="dump" aria-expanded="'+dumpOpen+'">Brain dump</button><span class="note">Rest is a quest too. Finish 3 within an hour for a combo.</span></div>'+dump+
     '<div class="cols"><div>'+
     '<div class="sechead"><h2>Daily quests</h2><span class="label num">'+dd+'/'+S.dailies.length+' today · optional</span></div>'+
     (S.dailies.length?'<ul class="list">'+S.dailies.map(q=>qRow(q,true)).join('')+'</ul>':'<div class="empty">No dailies yet. Add one small thing you’d like to do most days.</div>')+
@@ -1121,6 +1145,18 @@ new MutationObserver(paint).observe(root,{attributes:true,attributeFilter:['data
 window.addEventListener('beforeinstallprompt',e=>{e.preventDefault();deferredPrompt=e;if(tab==='save')render()});
 if(window.CQR_PWA&&'serviceWorker' in navigator&&location.protocol==='https:')navigator.serviceWorker.register('sw.js').catch(()=>{});
 
+async function pullToday(){
+  const urls=['today.json','https://raw.githubusercontent.com/puicumber/quest-room/main/today.json'];
+  for(const u of urls){
+    try{const r=await fetch(u+'?t='+Date.now(),{cache:'no-store'});if(!r.ok)continue;const d=await r.json();
+      if(!d||d.date!==today()||!Array.isArray(d.quests))return;
+      if(S.cq&&S.cq.date===d.date)return;
+      S.cq={date:d.date,note:typeof d.note==='string'?d.note.slice(0,300):'',quests:d.quests.slice(0,5).filter(q=>q&&q.t).map(q=>({id:uid(),t:String(q.t).slice(0,140),a:AREAS[q.a]?q.a:'health',s:SIZES[q.s]?q.s:'small',done:false}))};
+      S.showAll=false;commit();return}catch(e){}
+  }
+}
+pullToday();
+document.addEventListener('visibilitychange',()=>{if(!document.hidden)pullToday()});
 (async()=>{
   try{
     if(!window.claude||!window.claude.use)return;
