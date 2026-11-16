@@ -1150,8 +1150,13 @@ async function pullToday(){
   for(const u of urls){
     try{const r=await fetch(u+'?t='+Date.now(),{cache:'no-store'});if(!r.ok)continue;const d=await r.json();
       if(!d||d.date!==today()||!Array.isArray(d.quests))return;
-      if(S.cq&&S.cq.date===d.date)return;
-      S.cq={date:d.date,note:typeof d.note==='string'?d.note.slice(0,300):'',quests:d.quests.slice(0,5).filter(q=>q&&q.t).map(q=>({id:uid(),t:String(q.t).slice(0,140),a:AREAS[q.a]?q.a:'health',s:SIZES[q.s]?q.s:'small',done:false}))};
+      const mk=q=>({id:uid(),t:String(q.t).slice(0,140),a:AREAS[q.a]?q.a:'health',s:SIZES[q.s]?q.s:'small',done:false});
+      if(S.cq&&S.cq.date===d.date){
+        const have=new Set(S.cq.quests.map(q=>q.t));const add=d.quests.slice(0,8).filter(q=>q&&q.t&&!have.has(String(q.t).slice(0,140)));
+        if(typeof d.note==='string')S.cq.note=d.note.slice(0,300);
+        if(add.length){add.forEach(q=>S.cq.quests.push(mk(q)));toast(add.length+' new quest'+(add.length>1?'s':'')+' for today')}
+        commit();return}
+      S.cq={date:d.date,note:typeof d.note==='string'?d.note.slice(0,300):'',quests:d.quests.slice(0,8).filter(q=>q&&q.t).map(mk)};
       S.showAll=false;commit();return}catch(e){}
   }
 }
